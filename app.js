@@ -31,7 +31,7 @@ app.get('/1.css', (req, res) => {
   fs.readFile(cssPath, (err, content) => {
     if(!err) {
       // 设置到期时间
-      res.setHeader('Expires', 'Thu Dec 05 2019 14:51:08 GMT+0800 (CST)');
+      res.setHeader('Expires', 'Thu Dec 05 2019 23:51:08 GMT+0800 (CST)');
       // 发送1.css文件buffer
       res.end(content);
     }
@@ -102,6 +102,37 @@ app.get('/2.js', (req, res) => {
   })
 });
 
+
+// 刷新/访问行为
+app.get('/1.png', (req, res) => {
+  // 设置到期时间
+  res.setHeader('Expires', 'Thu Dec 05 2019 23:51:08 GMT+0800 (CST)');
+  res.setHeader('Cache-Control', 'public, max-age=6000');
+
+  const imgPath = path.join(__dirname, './public/images/1.png');
+  // 获取文件1.png的信息
+  fs.stat(imgPath, (err, stat) => {
+    // 获取文件内容被修改的时间 modify time
+    let lastModified = stat.mtime.toUTCString();
+   // 判断 if-modified-since 的时间与资源的最后修改时间是否一致
+    if (req.headers['if-modified-since'] === lastModified) {
+      // 设置响应状态码
+      res.writeHead(304, 'not modified');
+     // 响应体为空，减少传输时间
+      res.end();
+    } else {
+      // 读取文件
+      fs.readFile(imgPath, (err, content) => {
+        // 设置Last-Modified
+        res.setHeader('Last-Modified', lastModified);
+        // 设置响应状态码
+        res.writeHead(200, 'ok');
+        // 响应体为空，减少传输时间
+        res.end(content);
+      })
+    }
+  })
+});
 
 
 // catch 404 and forward to error handler
